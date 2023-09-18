@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -12,6 +13,7 @@ import (
 	"github.com/utsavgupta/knowledge-hub/app/adapters/transport"
 	"github.com/utsavgupta/knowledge-hub/app/repos"
 	"github.com/utsavgupta/knowledge-hub/app/runners"
+	"github.com/utsavgupta/knowledge-hub/app/services"
 	"github.com/utsavgupta/knowledge-hub/app/uc"
 )
 
@@ -59,10 +61,10 @@ func createHttpRunnerDependencies(postgresConnString string, weaviateHost *url.U
 
 	var domainRepo repos.DomainRepo
 	var resourceRepo repos.ResourceRepo
-	// var answerRepo repos.AnswerRepo
-	// var conceptService services.ConceptService
+	var answerRepo repos.AnswerRepo
+	var conceptService services.ConceptService
 
-	// conceptService = datasources.NewConceptOpenAI(http.DefaultClient, openaiAccessKey)
+	conceptService = datasources.NewConceptOpenAI(http.DefaultClient, openaiAccessKey)
 
 	if domainRepo, err = datasources.NewPGDomainRepo(pgConnPool); err != nil {
 		return nil, err
@@ -72,12 +74,12 @@ func createHttpRunnerDependencies(postgresConnString string, weaviateHost *url.U
 		return nil, err
 	}
 
-	// if answerRepo, err = datasources.NewWeaviateAnswerRepo(weaviateHost.Scheme, weaviateHost.Host, openaiAccessKey); err != nil {
-	// 	return nil, err
-	// }
+	if answerRepo, err = datasources.NewWeaviateAnswerRepo(weaviateHost.Scheme, weaviateHost.Host, openaiAccessKey); err != nil {
+		return nil, err
+	}
 
 	return &transport.HttpRunnerDependencies{
-		SearchUc:         uc.NewSearchUc(),
+		SearchUc:         uc.NewSearchUc(domainRepo, answerRepo, conceptService),
 		ListDomainsUc:    uc.NewListDomainsUc(domainRepo),
 		AddDomainUc:      uc.NewAddDomainUc(domainRepo),
 		DeleteDomainUc:   uc.NewDeleteDomainUc(domainRepo),

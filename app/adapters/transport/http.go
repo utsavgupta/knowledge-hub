@@ -32,7 +32,7 @@ func NewHttpRunner(port int, dependencies HttpRunnerDependencies) runners.Runner
 
 	router := mux.NewRouter()
 
-	router.NewRoute().HandlerFunc(NewSearchHandler()).Path("/search").Methods(http.MethodGet)
+	router.NewRoute().HandlerFunc(NewSearchHandler(dependencies.SearchUc)).Path("/search").Methods(http.MethodGet)
 	router.NewRoute().HandlerFunc(NewListDomainsHandler(dependencies.ListDomainsUc)).Path("/domains").Methods(http.MethodGet)
 	router.NewRoute().HandlerFunc(NewAddDomainHandler(dependencies.AddDomainUc)).Path("/domains").Methods(http.MethodPost)
 	router.NewRoute().HandlerFunc(NewDeleteDomainHandler(dependencies.DeleteDomainUc)).Path("/domains/{domain_id}").Methods(http.MethodDelete)

@@ -18,10 +18,34 @@ type apiError struct {
 	Err  string `json:"error"`
 }
 
-func NewSearchHandler() http.HandlerFunc {
+func NewSearchHandler(searchUc uc.SearchUc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		domainId := r.URL.Query().Get("domain_id")
+
+		if len(domainId) < 1 {
+			handleClientError(w, r, fmt.Errorf("domain_id cannot be empty."))
+			return
+		}
+
+		question := r.URL.Query().Get("question")
+
+		if len(question) < 1 {
+			handleClientError(w, r, fmt.Errorf("question cannot be empty."))
+			return
+		}
+
+		query := entities.Query{Question: question, DomainId: domainId}
+
+		answer, err := searchUc(r.Context(), query)
+
+		if err != nil {
+			handleError(w, r, err)
+			return
+		}
+
+		sendResponse(w, r, http.StatusOK, answer)
 	}
 }
 

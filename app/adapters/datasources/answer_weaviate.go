@@ -51,13 +51,15 @@ func (repo *weaviateAnswerRepo) Get(ctx context.Context, query entities.Query) (
 
 	fmt.Printf("%v\n", query)
 
-	response, err := repo.client.GraphQL().
+	q := repo.client.GraphQL().
 		Get().
 		WithClassName(query.DomainId).
-		WithNearText(nearTextArgumentBuilder).
+		// WithFields(graphql.Field{Name: "text"}, graphql.Field{Name: "source"}).
 		WithGenerativeSearch(generativeSearchBuilder).
-		WithLimit(3).
-		Do(ctx)
+		WithNearText(nearTextArgumentBuilder).
+		WithLimit(3)
+
+	response, err := q.Do(ctx)
 
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve answer from Weaviate for question `%s`: %w", query.Question, err)
@@ -74,7 +76,7 @@ func (repo *weaviateAnswerRepo) Get(ctx context.Context, query entities.Query) (
 
 func (repo *weaviateAnswerRepo) prepareNearTextArgumentBuilder(concepts []entities.Concept) *graphql.NearTextArgumentBuilder {
 
-	conceptsStr := make([]string, len(concepts))
+	conceptsStr := make([]string, 0, len(concepts))
 
 	for _, concept := range concepts {
 		conceptsStr = append(conceptsStr, string(concept))
@@ -87,8 +89,7 @@ func (repo *weaviateAnswerRepo) prepareNearTextArgumentBuilder(concepts []entiti
 func (repo *weaviateAnswerRepo) prepareAskArgBuilder(question string) *graphql.AskArgumentBuilder {
 
 	return repo.client.GraphQL().AskArgBuilder().
-		WithQuestion(question).
-		WithProperties([]string{"text"})
+		WithQuestion(question)
 }
 
 func (repo *weaviateAnswerRepo) prepareAnswerFromResponse(query entities.Query, response graphqlModels.GraphQLResponse) *entities.Answer {
