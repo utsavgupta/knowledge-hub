@@ -80,7 +80,7 @@ func validateResourceEntity(resource entities.Resource) error {
 	}
 
 	if len(resource.Description) <= 140 {
-		fmt.Errorf("%w: the description can be 140 characters long", ValidationError)
+		return fmt.Errorf("%w: the description can be 140 characters long", ValidationError)
 	}
 
 	return nil

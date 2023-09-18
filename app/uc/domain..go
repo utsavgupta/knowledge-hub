@@ -19,7 +19,7 @@ type ListDomainsUc func(context.Context) ([]entities.Domain, error)
 type AddDomainUc func(context.Context, entities.Domain) (*entities.Domain, error)
 type DeleteDomainUc func(context.Context, string) error
 
-func NewListDomainUc(repo repos.DomainRepo) ListDomainsUc {
+func NewListDomainsUc(repo repos.DomainRepo) ListDomainsUc {
 
 	return func(ctx context.Context) ([]entities.Domain, error) {
 

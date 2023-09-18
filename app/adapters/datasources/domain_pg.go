@@ -10,10 +10,10 @@ import (
 )
 
 type pgDomainRepo struct {
-	conn *pgxpool.Conn
+	conn *pgxpool.Pool
 }
 
-func NewPGDomainRepo(connPool *pgxpool.Conn) (repos.DomainRepo, error) {
+func NewPGDomainRepo(connPool *pgxpool.Pool) (repos.DomainRepo, error) {
 
 	return &pgDomainRepo{connPool}, nil
 }
