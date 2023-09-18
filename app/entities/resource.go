@@ -1,7 +1,6 @@
 package entities
 
 import (
-	"net/url"
 	"time"
 )
 
@@ -17,7 +16,7 @@ type Resource struct {
 	Name                 string     `json:"name"`
 	Description          string     `json:"description"`
 	Status               string     `json:"status"`
-	Url                  url.URL    `json:"url"`
+	Url                  string     `json:"url"`
 	CreatedAt            time.Time  `json:"createdAt"`
 	UpdatedAt            *time.Time `json:"updatedAt,omitempty"`
 	IngestionStartedAt   *time.Time `json:"ingestion_started_at,omitempty"`

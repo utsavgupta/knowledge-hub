@@ -10,10 +10,10 @@ import (
 )
 
 type pgResourceRepo struct {
-	conn *pgxpool.Conn
+	conn *pgxpool.Pool
 }
 
-func NewPGResourceRepo(connPool *pgxpool.Conn) (repos.ResourceRepo, error) {
+func NewPGResourceRepo(connPool *pgxpool.Pool) (repos.ResourceRepo, error) {
 
 	return &pgResourceRepo{connPool}, nil
 }
@@ -76,13 +76,16 @@ func (repo *pgResourceRepo) Get(ctx context.Context, id int) (*entities.Resource
 
 func (repo *pgResourceRepo) Create(ctx context.Context, resource entities.Resource) (*entities.Resource, error) {
 
-	_, err := repo.conn.Exec(ctx, "INSERT INTO resources (name, description, status, url,domain_id, created_at) VALUES ($1, $2, $3, $4)", resource.Name, resource.Description, entities.ResourceStatusNew, resource.Url.RequestURI(), resource.DomainId, resource.CreatedAt)
+	row := repo.conn.QueryRow(ctx, "INSERT INTO resources(name, description, status, url,domain_id, created_at) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id", resource.Name, resource.Description, entities.ResourceStatusNew, resource.Url, resource.DomainId, resource.CreatedAt)
+	idx := -1
 
-	if err != nil {
+	if err := row.Scan(&idx); err != nil {
 
 		err = fmt.Errorf("could not create resource %v: %w", resource, err)
+		return nil, err
 	}
 
+	resource.Id = idx
 	return &resource, nil
 }
 
@@ -100,11 +103,11 @@ func (repo *pgResourceRepo) Update(ctx context.Context, resource entities.Resour
 	return &resource, err
 }
 
-func (repo *pgResourceRepo) Delete(ctx context.Context, id int) error {
+func (repo *pgResourceRepo) Delete(ctx context.Context, domainId string, id int) error {
 
 	var err error
 
-	if _, err = repo.conn.Exec(ctx, "DELETE FROM resources WHERE id = $1", id); err != nil {
+	if _, err = repo.conn.Exec(ctx, "DELETE FROM resources WHERE id = $1 AND domain_id = $2", id, domainId); err != nil {
 
 		err = fmt.Errorf("could not delete resource with id %d: %w", id, err)
 	}

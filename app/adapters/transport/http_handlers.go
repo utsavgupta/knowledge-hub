@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
+	"github.com/gorilla/mux"
 	"github.com/utsavgupta/knowledge-hub/app/entities"
 	"github.com/utsavgupta/knowledge-hub/app/logger"
 	"github.com/utsavgupta/knowledge-hub/app/uc"
@@ -62,31 +64,117 @@ func NewAddDomainHandler(addDomainUc uc.AddDomainUc) http.HandlerFunc {
 	}
 }
 
-func NewDeleteDomainHandler() http.HandlerFunc {
+func NewDeleteDomainHandler(deleteDomainUc uc.DeleteDomainUc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		vars := mux.Vars(r)
+		domainId, ok := vars["domain_id"]
+
+		if !ok {
+			handleClientError(w, r, fmt.Errorf("domain id not provided"))
+			return
+		}
+
+		if err := deleteDomainUc(r.Context(), domainId); err != nil {
+			handleServerError(w, r, fmt.Errorf("internal server error"))
+			return
+		}
+
+		sendResponse(w, r, http.StatusOK, "")
 	}
 }
 
-func NewListResourcesHandler() http.HandlerFunc {
+func NewListResourcesHandler(listResourcesUc uc.ListResourcesUc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		vars := mux.Vars(r)
+		domainId, ok := vars["domain_id"]
+
+		if !ok {
+			handleClientError(w, r, fmt.Errorf("domain id not provided"))
+			return
+		}
+
+		resources, err := listResourcesUc(r.Context(), domainId)
+
+		if err != nil {
+			handleError(w, r, err)
+			return
+		}
+
+		sendResponse(w, r, http.StatusOK, resources)
 	}
 }
 
-func NewAddResourceHandler() http.HandlerFunc {
+func NewAddResourceHandler(addResourceUc uc.AddResourceUc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		vars := mux.Vars(r)
+		domainId, ok := vars["domain_id"]
+
+		if !ok {
+			handleClientError(w, r, fmt.Errorf("domain id not provided"))
+			return
+		}
+
+		resource := &entities.Resource{}
+
+		defer r.Body.Close()
+
+		if err := json.NewDecoder(r.Body).Decode(resource); err != nil {
+			logger.Instance().Debug(r.Context(), err.Error())
+			handleClientError(w, r, fmt.Errorf("invalid message body. please check documentation."))
+			return
+		}
+
+		resource.DomainId = domainId
+
+		resource, err := addResourceUc(r.Context(), *resource)
+
+		if err != nil {
+			handleError(w, r, err)
+			return
+		}
+
+		sendResponse(w, r, http.StatusCreated, *resource)
 	}
 }
 
-func NewDeleteResourceHandler() http.HandlerFunc {
+func NewDeleteResourceHandler(deleteResourceUc uc.DeleteResourceUc) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		vars := mux.Vars(r)
+		domainId, ok := vars["domain_id"]
+
+		if !ok {
+			handleClientError(w, r, fmt.Errorf("domain id not provided"))
+			return
+		}
+
+		resourceId, ok := vars["resource_id"]
+
+		if !ok {
+			handleClientError(w, r, fmt.Errorf("resource id not provided"))
+			return
+		}
+
+		resourceIdInt, err := strconv.Atoi(resourceId)
+
+		if err != nil {
+			handleClientError(w, r, fmt.Errorf("resource id should be an integer"))
+			return
+		}
+
+		if err := deleteResourceUc(r.Context(), domainId, resourceIdInt); err != nil {
+			handleServerError(w, r, fmt.Errorf("internal server error"))
+			return
+		}
+
+		sendResponse(w, r, http.StatusOK, "")
 	}
 }
 

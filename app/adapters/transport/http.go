@@ -35,9 +35,10 @@ func NewHttpRunner(port int, dependencies HttpRunnerDependencies) runners.Runner
 	router.NewRoute().HandlerFunc(NewSearchHandler()).Path("/search").Methods(http.MethodGet)
 	router.NewRoute().HandlerFunc(NewListDomainsHandler(dependencies.ListDomainsUc)).Path("/domains").Methods(http.MethodGet)
 	router.NewRoute().HandlerFunc(NewAddDomainHandler(dependencies.AddDomainUc)).Path("/domains").Methods(http.MethodPost)
-	router.NewRoute().HandlerFunc(NewDeleteDomainHandler()).Path("/domains/{domain_id}").Methods(http.MethodDelete)
-	router.NewRoute().HandlerFunc(NewListResourcesHandler()).Path("/domains/{domain_id}/resources").Methods(http.MethodGet)
-	router.NewRoute().HandlerFunc(NewAddResourceHandler()).Path("/domains/{domain_id}/resources").Methods(http.MethodPost)
+	router.NewRoute().HandlerFunc(NewDeleteDomainHandler(dependencies.DeleteDomainUc)).Path("/domains/{domain_id}").Methods(http.MethodDelete)
+	router.NewRoute().HandlerFunc(NewListResourcesHandler(dependencies.ListResourcesUc)).Path("/domains/{domain_id}/resources").Methods(http.MethodGet)
+	router.NewRoute().HandlerFunc(NewAddResourceHandler(dependencies.AddResourceUc)).Path("/domains/{domain_id}/resources").Methods(http.MethodPost)
+	router.NewRoute().HandlerFunc(NewDeleteResourceHandler(dependencies.DeleteResourceUc)).Path("/domains/{domain_id}/resources/{resource_id}").Methods(http.MethodDelete)
 
 	return &httpRunner{port, router}
 }

@@ -3,6 +3,7 @@ package uc
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/utsavgupta/knowledge-hub/app/entities"
@@ -12,7 +13,7 @@ import (
 
 type ListResourcesUc func(context.Context, string) ([]entities.Resource, error)
 type AddResourceUc func(context.Context, entities.Resource) (*entities.Resource, error)
-type DeleteResourceUc func(context.Context, int) error
+type DeleteResourceUc func(context.Context, string, int) error
 
 func NewListResourcesUc(repo repos.ResourceRepo) ListResourcesUc {
 
@@ -42,6 +43,7 @@ func NewAddResourceUc(resourceRepo repos.ResourceRepo, domainRepo repos.DomainRe
 		}
 
 		resource.CreatedAt = time.Now()
+		resource.Status = entities.ResourceStatusNew
 
 		ent, err := resourceRepo.Create(ctx, resource)
 
@@ -56,9 +58,9 @@ func NewAddResourceUc(resourceRepo repos.ResourceRepo, domainRepo repos.DomainRe
 
 func NewDeleteResourceUc(repo repos.ResourceRepo) DeleteResourceUc {
 
-	return func(ctx context.Context, id int) error {
+	return func(ctx context.Context, domainId string, id int) error {
 
-		err := repo.Delete(ctx, id)
+		err := repo.Delete(ctx, domainId, id)
 
 		if err != nil {
 			logger.Instance().Error(ctx, err.Error())
@@ -75,12 +77,16 @@ func validateResourceEntity(resource entities.Resource) error {
 		return fmt.Errorf("%w: domain id can beetween 2 and 15 characters long.", ValidationError)
 	}
 
-	if len(resource.Name) <= 50 {
+	if len(resource.Name) > 50 {
 		return fmt.Errorf("%w: the name can be 50 characters long", ValidationError)
 	}
 
-	if len(resource.Description) <= 140 {
+	if len(resource.Description) > 140 {
 		return fmt.Errorf("%w: the description can be 140 characters long", ValidationError)
+	}
+
+	if _, err := url.ParseRequestURI(resource.Url); err != nil {
+		return fmt.Errorf("%w: invalid url", ValidationError)
 	}
 
 	return nil

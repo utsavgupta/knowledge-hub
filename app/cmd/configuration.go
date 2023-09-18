@@ -106,7 +106,7 @@ func getIntFromEnv(name string) (int, error) {
 
 	if v, ok := os.LookupEnv(name); ok {
 
-		if num, err := strconv.Atoi(v); err != nil {
+		if num, err := strconv.Atoi(v); err == nil {
 
 			return num, nil
 		}
@@ -121,7 +121,7 @@ func getURLFromEnv(name string) (*url.URL, error) {
 
 	if v, ok := os.LookupEnv(name); ok {
 
-		if uri, err := url.Parse(v); err != nil {
+		if uri, err := url.Parse(v); err == nil {
 
 			return uri, nil
 		}

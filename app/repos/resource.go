@@ -11,5 +11,5 @@ type ResourceRepo interface {
 	Get(context.Context, int) (*entities.Resource, error)
 	Create(context.Context, entities.Resource) (*entities.Resource, error)
 	Update(context.Context, entities.Resource) (*entities.Resource, error)
-	Delete(context.Context, int) error
+	Delete(context.Context, string, int) error
 }

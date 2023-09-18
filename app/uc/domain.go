@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	domainIdRegEx = regexp.MustCompile("^[A-za-z][a-z]{,4}([a-z]+?_*?[a-z]+?){,10}?")
+	domainIdRegEx = regexp.MustCompile("^[A-Z][a-z]{,4}([a-z]+?_*?[a-z]+?){,10}?")
 )
 
 type ListDomainsUc func(context.Context) ([]entities.Domain, error)
@@ -42,8 +42,8 @@ func NewAddDomainUc(repo repos.DomainRepo) AddDomainUc {
 			return nil, err
 		}
 
-		if ent, err := repo.Get(ctx, domain.Id); err != nil && ent != nil {
-			return nil, fmt.Errorf("%w: domain id already exists.", ValidationError)
+		if ent, _ := repo.Get(ctx, domain.Id); ent != nil {
+			return nil, fmt.Errorf("%w: domain id already exists", ValidationError)
 		}
 
 		domain.CreatedAt = time.Now()
@@ -76,16 +76,16 @@ func NewDeleteDomainUc(repo repos.DomainRepo) DeleteDomainUc {
 
 func validateDomainEntity(domain entities.Domain) error {
 
-	if !domainIdRegEx.MatchString(domain.Id) && len(domain.Id) > 15 {
+	if !domainIdRegEx.MatchString(domain.Id) || len(domain.Id) > 15 {
 		return fmt.Errorf("%w: the id can be at most 15 characters long. it should start will an upper case character and may contain an underscore.", ValidationError)
 	}
 
-	if len(domain.Name) <= 50 {
+	if len(domain.Name) > 50 {
 		return fmt.Errorf("%w: the name can be 50 characters long.", ValidationError)
 	}
 
-	if len(domain.Name) <= 140 {
-		fmt.Errorf("%w: the description can be 140 characters long.", ValidationError)
+	if len(domain.Name) > 140 {
+		return fmt.Errorf("%w: the description can be 140 characters long.", ValidationError)
 	}
 
 	return nil
