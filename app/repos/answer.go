@@ -6,6 +6,6 @@ import (
 	"github.com/utsavgupta/knowledge-hub/app/entities"
 )
 
-type AnswerRepo interface {
-	Get(context.Context, entities.Query) (*entities.Answer, error)
+type ResponseRepo interface {
+	Get(context.Context, entities.Query) (*entities.Response, error)
 }

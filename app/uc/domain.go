@@ -39,6 +39,7 @@ func NewAddDomainUc(repo repos.DomainRepo) AddDomainUc {
 	return func(ctx context.Context, domain entities.Domain) (*entities.Domain, error) {
 
 		if err := validateDomainEntity(domain); err != nil {
+			logger.Instance().Debug(ctx, err.Error())
 			return nil, err
 		}
 

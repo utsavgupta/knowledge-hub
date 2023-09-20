@@ -35,6 +35,7 @@ func NewAddResourceUc(resourceRepo repos.ResourceRepo, domainRepo repos.DomainRe
 	return func(ctx context.Context, resource entities.Resource) (*entities.Resource, error) {
 
 		if err := validateResourceEntity(resource); err != nil {
+			logger.Instance().Debug(ctx, err.Error())
 			return nil, err
 		}
 

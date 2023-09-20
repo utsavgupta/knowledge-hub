@@ -33,7 +33,7 @@ func configureHttpRunner() (runners.Runner, error) {
 		return nil, err
 	}
 
-	if openaiAccessKey, err = getStringFromEnv("kh_openai_access_key"); err != nil {
+	if openaiAccessKey, err = getStringFromEnv("kh_openai_api_key"); err != nil {
 		return nil, err
 	}
 
@@ -61,7 +61,7 @@ func createHttpRunnerDependencies(postgresConnString string, weaviateHost *url.U
 
 	var domainRepo repos.DomainRepo
 	var resourceRepo repos.ResourceRepo
-	var answerRepo repos.AnswerRepo
+	var responseRepo repos.ResponseRepo
 	var conceptService services.ConceptService
 
 	conceptService = datasources.NewConceptOpenAI(http.DefaultClient, openaiAccessKey)
@@ -74,12 +74,14 @@ func createHttpRunnerDependencies(postgresConnString string, weaviateHost *url.U
 		return nil, err
 	}
 
-	if answerRepo, err = datasources.NewWeaviateAnswerRepo(weaviateHost.Scheme, weaviateHost.Host, openaiAccessKey); err != nil {
+	if responseRepo, err = datasources.NewWeaviateResponseRepo(weaviateHost.Scheme, weaviateHost.Host, openaiAccessKey); err != nil {
 		return nil, err
 	}
 
+	domainStatusValidator := uc.NewDomainStatusValidator(resourceRepo)
+
 	return &transport.HttpRunnerDependencies{
-		SearchUc:         uc.NewSearchUc(domainRepo, answerRepo, conceptService),
+		SearchUc:         uc.NewSearchUc(domainStatusValidator, responseRepo, conceptService),
 		ListDomainsUc:    uc.NewListDomainsUc(domainRepo),
 		AddDomainUc:      uc.NewAddDomainUc(domainRepo),
 		DeleteDomainUc:   uc.NewDeleteDomainUc(domainRepo),

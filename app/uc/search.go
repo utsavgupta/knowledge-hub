@@ -10,20 +10,15 @@ import (
 	"github.com/utsavgupta/knowledge-hub/app/services"
 )
 
-type SearchUc func(context.Context, entities.Query) (*entities.Answer, error)
+type SearchUc func(context.Context, entities.Query) (*entities.Response, error)
+type DomainStatusValidator func(context.Context, string) error
 
-func NewSearchUc(domainRepo repos.DomainRepo, answerRepo repos.AnswerRepo, conceptService services.ConceptService) SearchUc {
+func NewSearchUc(domainStatusValidator DomainStatusValidator, responseRepo repos.ResponseRepo, conceptService services.ConceptService) SearchUc {
 
-	return func(ctx context.Context, query entities.Query) (*entities.Answer, error) {
+	return func(ctx context.Context, query entities.Query) (*entities.Response, error) {
 
-		domain, err := domainRepo.Get(ctx, query.DomainId)
-
-		if err != nil {
-			return nil, fmt.Errorf("could not fetch domain from database: %w", err)
-		}
-
-		if domain == nil {
-			return nil, fmt.Errorf("%w: invalid domain id", ValidationError)
+		if err := domainStatusValidator(ctx, query.DomainId); err != nil {
+			return nil, err
 		}
 
 		concepts, err := conceptService.Get(ctx, query.Question)
@@ -35,7 +30,7 @@ func NewSearchUc(domainRepo repos.DomainRepo, answerRepo repos.AnswerRepo, conce
 
 		query.Concepts = concepts
 
-		answer, err := answerRepo.Get(ctx, query)
+		answer, err := responseRepo.Get(ctx, query)
 
 		if err != nil {
 			logger.Instance().Error(ctx, err.Error())
@@ -43,5 +38,30 @@ func NewSearchUc(domainRepo repos.DomainRepo, answerRepo repos.AnswerRepo, conce
 		}
 
 		return answer, err
+	}
+}
+
+func NewDomainStatusValidator(resourceRepo repos.ResourceRepo) DomainStatusValidator {
+
+	return func(ctx context.Context, domainId string) error {
+
+		resources, err := resourceRepo.List(ctx, domainId)
+
+		if err != nil {
+			logger.Instance().Error(ctx, err.Error())
+			return fmt.Errorf("could not fetch resources from database: %w", err)
+		}
+
+		if len(resources) < 1 {
+			return fmt.Errorf("%w: either the domain id %s does not exist, or it contains no resources", ValidationError, domainId)
+		}
+
+		for _, resource := range resources {
+			if resource.Status == entities.ResourceStatusIngested {
+				return nil
+			}
+		}
+
+		return fmt.Errorf("%w: none of the resources have been ingested for domain %s", ValidationError, domainId)
 	}
 }
