@@ -1,2 +1,2 @@
 # knowledge-hub
-An AI powered knowledgebase
+An AI powered knowledge base
